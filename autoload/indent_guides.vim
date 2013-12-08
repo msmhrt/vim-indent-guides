@@ -47,8 +47,13 @@ function! indent_guides#enable()
   for l:level in range(s:start_level, s:indent_levels)
     let l:group = 'IndentGuides' . ((l:level % 2 == 0) ? 'Even' : 'Odd')
     let l:column_start = (l:level - 1) * s:indent_size + 1
-    let l:soft_pattern = indent_guides#indent_highlight_pattern(g:indent_guides_soft_pattern, l:column_start, s:guide_size)
     let l:hard_pattern = indent_guides#indent_highlight_pattern('\t', l:column_start, s:indent_size)
+    if s:guide_size >= 0
+      let l:soft_pattern = indent_guides#indent_highlight_pattern(g:indent_guides_soft_pattern, l:column_start, s:guide_size)
+    else
+      let l:column_start += s:indent_size + s:guide_size
+      let l:soft_pattern = indent_guides#indent_highlight_pattern(g:indent_guides_soft_pattern, l:column_start, -s:guide_size)
+    endif
 
     " define the higlight patterns and add to matches list
     if g:indent_guides_space_guides
@@ -218,15 +223,15 @@ function! indent_guides#init_script_vars()
 endfunction
 
 "
-" Calculate the indent guide size. Ensures the guide size is less than or
-" equal to the actual indent size, otherwise some weird things can occur.
+" Calculate the indent guide size. Ensures guide_size is
+" (-indent_size < guide_size <= indent_size), otherwise some weird things can occur.
 "
 " NOTE: Currently, this only works when soft-tabs are being used.
 "
 function! indent_guides#calculate_guide_size()
   let l:guide_size = g:indent_guides_guide_size
 
-  if l:guide_size == 0 || l:guide_size > s:indent_size
+  if l:guide_size <= -s:indent_size || l:guide_size == 0 || l:guide_size > s:indent_size
     let l:guide_size = s:indent_size
   endif
 
